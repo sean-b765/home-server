@@ -1,0 +1,303 @@
+version: '3.8'
+
+services:
+  # OpenVPN Server - for remote access anywhere
+  openvpn:
+    image: kylemanna/openvpn
+    container_name: openvpn
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 1194:1194/udp
+    volumes:
+      - /srv/dev-disk-by-uuid-38A8B12CA8B0EA10/Appdata/Openvpn:/etc/openvpn
+    environment:
+      - TZ=${TZ}
+    networks:
+      - public
+
+  # Homepage - A personal dashboard for your server
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - 3000:3000
+    volumes:
+      # - ./state:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - public
+
+    # Media Server and utililities
+
+    # Prowlarr - Usenet and Torrent Indexer Manager
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:${PROWLARR_VERSION:-latest}
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ROOT}/config/prowlarr/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 9696:9696
+    networks:
+      - public
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Radarr - Movie Collection Manager
+  radarr:
+    container_name: radarr
+    image: linuxserver/radarr:latest
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - PORT=7878
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${ROOT}/config/radarr:/config
+      - ${MERGERFS_ROOT}/complete/movie-cartoons:/cartoons
+      - ${MERGERFS_ROOT}/complete/movies:/movies
+      - ${MERGERFS_ROOT}/complete/anime-movies:/anime-movies
+      - ${ROOT}/downloads:/downloads
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Sonarr - TV Show Collection Manager
+  sonarr:
+    container_name: sonarr
+    image: ghcr.io/linuxserver/sonarr:latest
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - PORT=8989
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${ROOT}/config/sonarr:/config
+      - ${MERGERFS_ROOT}/complete/anime:/anime
+      - ${MERGERFS_ROOT}/complete/anime-series:/anime-series
+      - ${MERGERFS_ROOT}/complete/tv-cartoons:/cartoons
+      - ${MERGERFS_ROOT}/complete/tv:/tv
+      - ${ROOT}/downloads:/downloads
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Lidarr - Music Collection Manager
+  lidarr:
+    image: linuxserver/lidarr
+    container_name: lidarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK_SET=022
+    volumes:
+      - ${ROOT}/config/lidarr/config:/config
+      - ${MERGERFS_ROOT}/complete/music:/music
+      - ${ROOT}/downloads:/downloads
+    ports:
+      - 8686:8686
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Plex Media Server
+  plex-server:
+    container_name: plex-server
+    image: linuxserver/plex
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - VERSION=docker
+      - UMASK_SET=022
+      #- PLEX_CLAIM=claim-E-code # optional
+      - PORT=32400
+    network_mode: host
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ${SSD_ROOT}/config/plex/db:/config
+      - ${SSD_ROOT}/config/plex/transcode:/transcode
+      - ${MERGERFS_ROOT}/complete:/data
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # AutoScan - Automated Media Scanning and Organization
+  autoscan:
+    image: hotio/autoscan
+    container_name: autoscan
+    restart: unless-stopped
+    networks:
+      - public
+    ports:
+      - 18085:3030
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK_SET=022
+      - TZ=${TZ}
+      #- PLEX_LOGIN: ""
+      #- PLEX_PASSWORD: ""
+    volumes:
+      - ${ROOT}/config/autoscan/config:/config
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Tautulli - Plex Media Server Monitoring and Analytics
+  tautulli:
+    container_name: tautulli
+    image: linuxserver/tautulli:latest
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ROOT}/config/tautulli:/config
+      - ${SSD_ROOT}/config/plex/db/Library:/logdata
+    ports:
+      - 18081:8181
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Overseerr - Media Request and Management Tool
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:${OVERSEERR_VERSION:-latest}
+    container_name: overseerr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ROOT}/config/overseerr:/config
+    ports:
+      - 5055:5055
+    networks:
+      - public
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Glances - System Monitoring Tool
+  glances:
+    image: nicolargo/glances:3.2.4.2-full
+    container_name: glances
+    restart: unless-stopped
+    pid: 'host'
+    ports:
+      - 61208:61208
+      - 61209:61209
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - GLANCES_OPT="-w"
+    networks:
+      - public
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # Transmission - Torrent Client
+  transmission:
+    image: linuxserver/transmission
+    container_name: transmission
+    restart: unless-stopped
+    network_mode: 'service:openvpn'
+    depends_on:
+      - openvpn
+    volumes:
+      - ${ROOT}/downloads:/downloads
+      - ${ROOT}/config/transmission:/config
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+
+  # n8n - Workflow Automation Tool
+  n8n:
+    image: n8nio/n8n:1.91.3
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - '5678:5678'
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=n8n-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8ndb
+      - DB_POSTGRESDB_USER=admin
+      - DB_POSTGRESDB_PASSWORD=admin123
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_IMPORT_EXPORT_DIR=/home/node/workflows
+      - N8N_IMPORT_WORKFLOWS=true
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_SECURE_COOKIE=true
+      - GENERIC_TIMEZONE=Australia/Perth
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - ./workflows:/home/node/workflows
+    depends_on:
+      - n8n-db
+    networks:
+      - public
+
+  # PostgreSQL Database
+  n8n-db:
+    image: postgres:15
+    container_name: n8n-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=n8ndb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - public
+
+volumes:
+  postgres-data: {}
+  n8n-data: {}
+
+networks:
+  public:
+    name: public

@@ -1,0 +1,24 @@
+| Service      | URL                                                      |
+| ------------ | -------------------------------------------------------- |
+| openvpn      | --                                                       |
+| Homepage     | [http://localhost:3000](http://localhost:3000)           |
+| Prowlarr     | [http://localhost:9696](http://localhost:9696)           |
+| Radarr       | [http://localhost:7878](http://localhost:7878)           |
+| Sonarr       | [http://localhost:8989](http://localhost:8989)           |
+| Lidarr       | [http://localhost:8686](http://localhost:8686)           |
+| Plex         | [http://localhost:32400/web](http://localhost:32400/web) |
+| Autoscan     | [http://localhost:18085](http://localhost:18085)         |
+| Tautulli     | [http://localhost:18081](http://localhost:18081)         |
+| Overseerr    | [http://localhost:5055](http://localhost:5055)           |
+| Glances      | [http://localhost:61208](http://localhost:61208)         |
+| Transmission | [http://localhost:9091](http://localhost:9091)           |
+| n8n          | [http://localhost:5678](http://localhost:5678)           |
+
+# Setup
+
+1. Initialize the openvpn server
+
+```
+docker compose run --rm openvpn ovpn_genconfig -u udp://your.domain.com
+docker compose run --rm openvpn ovpn_initpki
+```
