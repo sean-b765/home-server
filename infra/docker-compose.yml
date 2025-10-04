@@ -141,7 +141,7 @@ services:
     devices:
       - /dev/dri:/dev/dri
     volumes:
-      - ${SSD_ROOT}/config/plex/db:/config
+      - ${ROOT}/config/plex/db:/config
       - ${SSD_ROOT}/config/plex/transcode:/transcode
       - ${MERGERFS_ROOT}/complete:/data
     logging:
@@ -183,7 +183,7 @@ services:
       - TZ=${TZ}
     volumes:
       - ${ROOT}/config/tautulli:/config
-      - ${SSD_ROOT}/config/plex/db/Library:/logdata
+      - ${ROOT}/config/plex/db/Library:/logdata
     ports:
       - 18081:8181
     logging:
