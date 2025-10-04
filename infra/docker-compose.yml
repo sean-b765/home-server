@@ -11,7 +11,7 @@ services:
     ports:
       - 1194:1194/udp
     volumes:
-      - /srv/dev-disk-by-uuid-38A8B12CA8B0EA10/Appdata/Openvpn:/etc/openvpn
+      - ${ROOT}/config/openvpn:/etc/openvpn
     environment:
       - TZ=${TZ}
     networks:
