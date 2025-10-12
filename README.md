@@ -13,25 +13,3 @@
 | Glances      | [http://localhost:61208](http://localhost:61208)         |
 | Transmission | [http://localhost:9091](http://localhost:9091)           |
 | n8n          | [http://localhost:5678](http://localhost:5678)           |
-
-# Setup
-
-1. Initialize the openvpn server
-
-```
-docker compose run --rm openvpn ovpn_genconfig -u udp://your.domain.com
-docker compose run --rm openvpn ovpn_initpki
-```
-
-2. Start the server
-
-```
-docker compose up -d openvpn
-```
-
-3. Create users
-
-```
-docker compose run --rm openvpn easyrsa build-client-full bob nopass
-docker compose run --rm openvpn ovpn_getclient bob > bob.ovpn
-```
