@@ -158,23 +158,6 @@ services:
       options:
         max-size: '1m'
 
-  # Samba - File Sharing Service
-  samba:
-    image: dperson/samba
-    container_name: samba
-    restart: unless-stopped
-    ports:
-      - '137:137/udp'
-      - '138:138/udp'
-      - '139:139/tcp'
-      - '445:445/tcp'
-    volumes:
-      - ${MEDIA_ROOT}:/mount/media:rw
-    environment:
-      - USERID=${PUID}
-      - GROUPID=${PGID}
-    command: '-p -s Media:/mount/media:rw:guest'
-
   # AutoScan - Automated Media Scanning and Organization
   autoscan:
     image: hotio/autoscan
