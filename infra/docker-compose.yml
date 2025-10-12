@@ -79,9 +79,9 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${ROOT}/config/radarr:/config
-      - ${MERGERFS_ROOT}/complete/movie-cartoons:/cartoons
-      - ${MERGERFS_ROOT}/complete/movies:/movies
-      - ${MERGERFS_ROOT}/complete/anime-movies:/anime-movies
+      - ${MEDIA_ROOT}/complete/movie-cartoons:/cartoons
+      - ${MEDIA_ROOT}/complete/movies:/movies
+      - ${MEDIA_ROOT}/complete/anime-movies:/anime-movies
       - ${ROOT}/downloads:/downloads
     logging:
       driver: 'json-file'
@@ -102,10 +102,10 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${ROOT}/config/sonarr:/config
-      - ${MERGERFS_ROOT}/complete/anime:/anime
-      - ${MERGERFS_ROOT}/complete/anime-series:/anime-series
-      - ${MERGERFS_ROOT}/complete/tv-cartoons:/cartoons
-      - ${MERGERFS_ROOT}/complete/tv:/tv
+      - ${MEDIA_ROOT}/complete/anime:/anime
+      - ${MEDIA_ROOT}/complete/anime-series:/anime-series
+      - ${MEDIA_ROOT}/complete/tv-cartoons:/cartoons
+      - ${MEDIA_ROOT}/complete/tv:/tv
       - ${ROOT}/downloads:/downloads
     logging:
       driver: 'json-file'
@@ -123,7 +123,7 @@ services:
       - UMASK_SET=022
     volumes:
       - ${ROOT}/config/lidarr/config:/config
-      - ${MERGERFS_ROOT}/complete/music:/music
+      - ${MEDIA_ROOT}/complete/music:/music
       - ${ROOT}/downloads:/downloads
     ports:
       - 8686:8686
@@ -152,7 +152,24 @@ services:
     volumes:
       - ${ROOT}/config/plex/db:/config
       - ${SSD_ROOT}/config/plex/transcode:/transcode
-      - ${MERGERFS_ROOT}/complete:/data
+      - ${MEDIA_ROOT}/complete:/data
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '1m'
+
+  # MiniDLNA - Lightweight DLNA/UPnP-AV Media Server
+  minidlna:
+    restart: always
+    image: vladgh/minidlna:latest
+    network_mode: 'host'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - MINIDLNA_MEDIA_DIR=/media/
+      - MINIDLNA_FRIENDLY_NAME=seanserver
+    volumes:
+      - ${MEDIA_ROOT}/complete:/media:ro
     logging:
       driver: 'json-file'
       options:
