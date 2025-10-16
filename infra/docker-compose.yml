@@ -70,7 +70,6 @@ services:
     container_name: radarr
     image: linuxserver/radarr:latest
     restart: unless-stopped
-    network_mode: host
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -83,6 +82,8 @@ services:
       - ${MEDIA_ROOT}/complete/movies:/movies
       - ${MEDIA_ROOT}/complete/anime-movies:/anime-movies
       - ${MEDIA_ROOT}/downloads:/downloads
+    networks:
+      - public
     logging:
       driver: 'json-file'
       options:
@@ -93,7 +94,6 @@ services:
     container_name: sonarr
     image: ghcr.io/linuxserver/sonarr:latest
     restart: unless-stopped
-    network_mode: host
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -109,6 +109,8 @@ services:
       - ${MEDIA_ROOT}/downloads:/downloads
     ports:
       - 8989:8989
+    networks:
+      - public
 
   # Lidarr - Music Collection Manager
   lidarr:
