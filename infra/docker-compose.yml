@@ -1,4 +1,16 @@
 services:
+  # AdGuard Home - Network-wide Ad Blocker and DNS Server
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${ROOT}/config/adguard/work:/opt/adguardhome/work
+      - ${ROOT}/config/adguard/config:/opt/adguardhome/conf
+    environment:
+      - TZ=${TZ}
+
   # WireGuard VPN Server
   wireguard:
     image: lscr.io/linuxserver/wireguard:latest
