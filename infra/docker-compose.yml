@@ -4,13 +4,18 @@ services:
     image: adguard/adguardhome:latest
     container_name: adguard
     restart: unless-stopped
-    network_mode: host
+    networks:
+      - public
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+      - '8080:80' # web dashboard
+      - '3000:3000' # setup ui
     volumes:
       - ${ROOT}/config/adguard/work:/opt/adguardhome/work
       - ${ROOT}/config/adguard/config:/opt/adguardhome/conf
     environment:
       - TZ=${TZ}
-    command: --web-addr=0.0.0.0:8080 --dns-addr=0.0.0.0:53
 
   # Caddy - Web Server and Reverse Proxy
   # (Allows you to map radarr.server.local to radarr container)
