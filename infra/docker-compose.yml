@@ -11,6 +11,19 @@ services:
     environment:
       - TZ=${TZ}
 
+  # Caddy - Web Server and Reverse Proxy
+  # (Allows you to map radarr.server.local to radarr container)
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${ROOT}/config/caddy/data:/data
+      - ${ROOT}/config/caddy/config:/config
+    networks:
+      - public
+
   # WireGuard VPN Server
   wireguard:
     image: lscr.io/linuxserver/wireguard:latest
