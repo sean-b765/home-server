@@ -10,6 +10,7 @@ services:
       - ${ROOT}/config/adguard/config:/opt/adguardhome/conf
     environment:
       - TZ=${TZ}
+    command: --web-addr=0.0.0.0:8080 --dns-addr=0.0.0.0:53
 
   # Caddy - Web Server and Reverse Proxy
   # (Allows you to map radarr.server.local to radarr container)
