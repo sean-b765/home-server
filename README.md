@@ -1,15 +1,45 @@
-| Service      | URL                                                      |
-| ------------ | -------------------------------------------------------- |
-| openvpn      | --                                                       |
-| Homepage     | [http://localhost:3000](http://localhost:3000)           |
-| Prowlarr     | [http://localhost:9696](http://localhost:9696)           |
-| Radarr       | [http://localhost:7878](http://localhost:7878)           |
-| Sonarr       | [http://localhost:8989](http://localhost:8989)           |
-| Lidarr       | [http://localhost:8686](http://localhost:8686)           |
-| Plex         | [http://localhost:32400/web](http://localhost:32400/web) |
-| Autoscan     | [http://localhost:18085](http://localhost:18085)         |
-| Tautulli     | [http://localhost:18081](http://localhost:18081)         |
-| Overseerr    | [http://localhost:5055](http://localhost:5055)           |
-| Glances      | [http://localhost:61208](http://localhost:61208)         |
-| Transmission | [http://localhost:9091](http://localhost:9091)           |
-| n8n          | [http://localhost:5678](http://localhost:5678)           |
+| Service      | Description                                     | Port(s)                                 |
+| ------------ | ----------------------------------------------- | --------------------------------------- |
+| caddy        | Web server, use for reverse-proxy               | 80, 443                                 |
+| adguard      | DNS server, blocks ads, can rewrite DNS entries | 8080 (admin dashboard), 3001 (setup ui) |
+| homepage     | Nice dashboard                                  | 3000                                    |
+| transmission | Torrent client                                  | 9091                                    |
+| prowlarr     | Torrent indexer                                 | 9696                                    |
+| radarr       | Movies                                          | 7878                                    |
+| sonarr       | TV                                              | 8989                                    |
+| lidarr       | Music                                           | 8686                                    |
+| plex         | Media streaming                                 | 32400                                   |
+| autoscan     |                                                 |                                         |
+| tautulli     |                                                 | 18081                                   |
+| overseerr    |                                                 | 5051                                    |
+| glances      |                                                 | 61208                                   |
+| n8n          |                                                 |                                         |
+
+# AdGuard Home setup
+
+Note: you will have to free port 53 on your server before hosting AdGuard...
+Ubuntu uses `systemd-resolved` by default:
+
+```
+sudo systemctl stop systemd-resolved
+sudo systemctl disable systemd-resolved
+```
+
+1. Visit http://hostname:3001 to setup
+2. Bind to _All Interfaces_
+3. Navigate to http://hostname:8080 to view the dashboard UI
+4. Set your DNS server as the local IP of your home server
+5. You can add custom DNS rewrites to choose a custom domain for your home server:
+
+- `*.myhostname.local` -> `SERVER IP`
+- `myhostname.local` -> `SERVER IP`
+
+# Prowlarr setup
+
+1. Prowlarr ➡️ Settings ➡️ Apps ➡️ Applications (+ Add)
+2. Add **Sonarr/Radarr**:
+
+- You want to change the **Prowlarr Server**, **Sonarr/Radarr Server**, **API Key** fields
+- Prowlarr Server: `http://prowlarr:9696`
+- Radarr Server: `http://radarr:7878`
+- API Key: **Sonarr/Radarr** ➡️ Settings ➡️ General ➡️ Security ➡️ API key

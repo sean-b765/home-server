@@ -1,7 +1,43 @@
-sonarr.yourhostname {
+yourhostname.local {
+  reverse_proxy homepage:3000
+}
+
+sonarr.yourhostname.local {
   reverse_proxy sonarr:8989
 }
 
-radarr.yourhostname {
+plex.yourhostname.local {
+  reverse_proxy plex:32400
+}
+
+radarr.yourhostname.local {
   reverse_proxy radarr:7878
+}
+
+bazarr.seanserver.local {
+  reverse_proxy bazarr:6767
+}
+
+transmission.yourhostname.local {
+  reverse_proxy transmission:9091
+}
+
+prowlarr.yourhostname.local {
+  reverse_proxy prowlarr:9696
+}
+
+adguard.yourhostname.local {
+  reverse_proxy adguard:8080
+}
+
+glances.yourhostname.local {
+  reverse_proxy glances:61208
+}
+
+overseerr.yourhostname.local {
+  reverse_proxy overseerr:5055
+}
+
+tautulli.yourhostname.local {
+  reverse_proxy tautulli:18081
 }

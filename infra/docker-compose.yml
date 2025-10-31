@@ -10,7 +10,7 @@ services:
       - '53:53/tcp'
       - '53:53/udp'
       - '8080:80' # web dashboard
-      - '3001:3001' # setup ui
+      - '3001:3000' # setup ui
     volumes:
       - ${ROOT}/config/adguard/work:/opt/adguardhome/work
       - ${ROOT}/config/adguard/config:/opt/adguardhome/conf
@@ -18,7 +18,8 @@ services:
       - TZ=${TZ}
 
   # Caddy - Web Server and Reverse Proxy
-  # (Allows you to map radarr.server.local to radarr container)
+  # (Allows you to map radarr.server.local to radarr container,
+  #   assuming you have created a DNS entry in adguard)
   caddy:
     image: caddy:latest
     container_name: caddy
@@ -27,6 +28,9 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ${ROOT}/config/caddy/data:/data
       - ${ROOT}/config/caddy/config:/config
+    ports:
+      - 80:80
+      - 443:443
     networks:
       - public
 
@@ -66,10 +70,11 @@ services:
       - PGID=${PGID}
       - HOMEPAGE_ALLOWED_HOSTS=${HOSTNAME},${HOSTNAME}:3000
     ports:
-      - ${HOMEPAGE_PORT}:3000
+      - 3000:3000
     volumes:
       - ${ROOT}/config/homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${MEDIA_ROOT}:/media
     networks:
       - public
 
@@ -109,10 +114,10 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${ROOT}/config/radarr:/config
-      - ${MEDIA_ROOT}/complete/movie-cartoons:/cartoons
       - ${MEDIA_ROOT}/complete/movies:/movies
-      - ${MEDIA_ROOT}/complete/anime-movies:/anime-movies
       - ${MEDIA_ROOT}/downloads:/downloads
+    ports:
+      - 7878:7878
     networks:
       - public
     logging:
@@ -133,15 +138,30 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${ROOT}/config/sonarr:/config
-      - ${MEDIA_ROOT}/complete/anime:/anime
-      - ${MEDIA_ROOT}/complete/anime-series:/anime-series
-      - ${MEDIA_ROOT}/complete/tv-cartoons:/cartoons
       - ${MEDIA_ROOT}/complete/tv:/tv
       - ${MEDIA_ROOT}/downloads:/downloads
     ports:
       - 8989:8989
     networks:
       - public
+
+  bazarr:
+    image: ghcr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ROOT}/config/bazarr:/config
+      - ${MEDIA_ROOT}/complete/movies:/movies
+      - ${MEDIA_ROOT}/complete/tv:/tv
+      - ${MEDIA_ROOT}/downloads:/downloads
+    networks:
+      - public
+    ports:
+      - 6767:6767
+    restart: unless-stopped
 
   # Lidarr - Music Collection Manager
   lidarr:
@@ -165,8 +185,8 @@ services:
         max-size: '1m'
 
   # Plex Media Server
-  plex-server:
-    container_name: plex-server
+  plex:
+    container_name: plex
     image: linuxserver/plex
     restart: unless-stopped
     environment:
@@ -177,7 +197,10 @@ services:
       - UMASK_SET=022
       #- PLEX_CLAIM=claim-E-code # optional
       - PORT=32400
-    network_mode: host
+    networks:
+      - public
+    ports:
+      - 32400:32400
     devices:
       - /dev/dri:/dev/dri
     volumes:
@@ -190,27 +213,27 @@ services:
         max-size: '1m'
 
   # AutoScan - Automated Media Scanning and Organization
-  autoscan:
-    image: hotio/autoscan
-    container_name: autoscan
-    restart: unless-stopped
-    networks:
-      - public
-    ports:
-      - 18085:3030
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - UMASK_SET=022
-      - TZ=${TZ}
-      #- PLEX_LOGIN: ""
-      #- PLEX_PASSWORD: ""
-    volumes:
-      - ${ROOT}/config/autoscan/config:/config
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '1m'
+  # autoscan:
+  #   image: hotio/autoscan
+  #   container_name: autoscan
+  #   restart: unless-stopped
+  #   networks:
+  #     - public
+  #   ports:
+  #     - 18085:3030
+  #   environment:
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
+  #     - UMASK_SET=022
+  #     - TZ=${TZ}
+  #     #- PLEX_LOGIN: ""
+  #     #- PLEX_PASSWORD: ""
+  #   volumes:
+  #     - ${ROOT}/config/autoscan/config:/config
+  #   logging:
+  #     driver: 'json-file'
+  #     options:
+  #       max-size: '1m'
 
   # Tautulli - Plex Media Server Monitoring and Analytics
   tautulli:
@@ -223,13 +246,10 @@ services:
       - TZ=${TZ}
     volumes:
       - ${ROOT}/config/tautulli:/config
-      - ${ROOT}/config/plex/db/Library:/logdata
     ports:
       - 18081:8181
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '1m'
+    networks:
+      - public
 
   # Overseerr - Media Request and Management Tool
   overseerr:
@@ -246,10 +266,6 @@ services:
       - 5055:5055
     networks:
       - public
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '1m'
 
   # Glances - System Monitoring Tool
   glances:
@@ -263,21 +279,19 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      - GLANCES_OPT="-w"
+      - GLANCES_OPT=-w
     networks:
       - public
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '1m'
 
   # Transmission - Torrent Client
   transmission:
     image: linuxserver/transmission
     container_name: transmission
     restart: unless-stopped
+    networks:
+      - public
     volumes:
-      - ${ROOT}/downloads:/downloads
+      - ${MEDIA_ROOT}/downloads:/downloads
       - ${ROOT}/config/transmission:/config
     environment:
       - PUID=${PUID}
@@ -288,7 +302,7 @@ services:
 
   # n8n - Workflow Automation Tool
   n8n:
-    image: n8nio/n8n:1.91.3
+    image: n8nio/n8n:latest
     container_name: n8n
     restart: unless-stopped
     ports:
@@ -309,11 +323,11 @@ services:
       - N8N_IMPORT_EXPORT_DIR=/home/node/workflows
       - N8N_IMPORT_WORKFLOWS=true
       - N8N_RUNNERS_ENABLED=true
-      - N8N_SECURE_COOKIE=true
-      - GENERIC_TIMEZONE=Australia/Perth
+      - N8N_SECURE_COOKIE=false
+      - GENERIC_TIMEZONE=${TZ}
     volumes:
-      - n8n-data:/home/node/.n8n
-      - ./workflows:/home/node/workflows
+      - ${ROOT}/config/n8n:/home/node/.n8n/config
+      - ${ROOT}/data/n8n/workflows:/home/node/workflows
     depends_on:
       - n8n-db
     networks:
@@ -329,13 +343,9 @@ services:
       - POSTGRES_PASSWORD=admin123
       - POSTGRES_DB=n8ndb
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ${ROOT}/data/n8n-db/data:/var/lib/postgresql/data
     networks:
       - public
-
-volumes:
-  postgres-data: {}
-  n8n-data: {}
 
 networks:
   public:
